@@ -30,9 +30,11 @@ if (!process.env.OPENAI_API_KEY && !process.env.OPENAI_ACCESS_TOKEN)
 
 let api: ChatGPTAPI | ChatGPTUnofficialProxyAPI
 
+// 校验环境变量，配置网络请求参数（token/key + modal)
 (async () => {
   // More Info: https://github.com/transitive-bullshit/chatgpt-api
 
+  // 使用openai提供的api接口（收费但稳定）
   if (process.env.OPENAI_API_KEY) {
     const OPENAI_API_MODEL = process.env.OPENAI_API_MODEL
     const model = isNotEmptyString(OPENAI_API_MODEL) ? OPENAI_API_MODEL : 'gpt-3.5-turbo'
@@ -51,6 +53,7 @@ let api: ChatGPTAPI | ChatGPTUnofficialProxyAPI
     api = new ChatGPTAPI({ ...options })
     apiModel = 'ChatGPTAPI'
   }
+  // 使用chat.openai.com网页的token（免费但不稳定）
   else {
     const options: ChatGPTUnofficialProxyAPIOptions = {
       accessToken: process.env.OPENAI_ACCESS_TOKEN,
@@ -75,6 +78,7 @@ async function chatReplyProcess(
   try {
     let options: SendMessageOptions = { timeoutMs }
 
+    // 插入对话上下文
     if (lastContext) {
       if (apiModel === 'ChatGPTAPI')
         options = { parentMessageId: lastContext.parentMessageId }
@@ -100,6 +104,7 @@ async function chatReplyProcess(
   }
 }
 
+// 请求api余额
 async function fetchBalance() {
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY
   const OPENAI_API_BASE_URL = process.env.OPENAI_API_BASE_URL
@@ -122,6 +127,7 @@ async function fetchBalance() {
   }
 }
 
+// 获取环境配置
 async function chatConfig() {
   const balance = await fetchBalance()
   const reverseProxy = process.env.API_REVERSE_PROXY ?? '-'
@@ -135,6 +141,7 @@ async function chatConfig() {
   })
 }
 
+// 配置请求代理
 function setupProxy(options: ChatGPTAPIOptions | ChatGPTUnofficialProxyAPIOptions) {
   if (process.env.SOCKS_PROXY_HOST && process.env.SOCKS_PROXY_PORT) {
     const agent = new SocksProxyAgent({

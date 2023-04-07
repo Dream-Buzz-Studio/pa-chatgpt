@@ -2,7 +2,7 @@
 import { NButton, useDialog } from 'naive-ui'
 import { computed } from 'vue'
 
-import { PromptInput } from '../index'
+import { FastPromptList, PromptInput } from '../index'
 
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { HoverButton, SvgIcon } from '@/components/common'
@@ -89,6 +89,7 @@ function handleEnter(event: KeyboardEvent) {
 <template>
   <footer :class="footerClass">
     <div class="w-full max-w-screen-xl m-auto">
+      <FastPromptList @update-input="prompt => $emit('update:prompt', prompt)" />
       <div class="flex items-center justify-between space-x-2">
         <HoverButton @click="handleClear">
           <span class="text-xl text-[#4f555e] dark:text-white">

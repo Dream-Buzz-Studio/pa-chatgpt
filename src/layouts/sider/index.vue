@@ -1,18 +1,19 @@
 <script setup lang='ts'>
 import type { CSSProperties } from 'vue'
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { NButton, NLayoutSider } from 'naive-ui'
+import { useRouter } from 'vue-router'
+
 import List from './List.vue'
 import Footer from './Footer.vue'
+
 import { useAppStore, useChatStore } from '@/store'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
-import { PromptStore } from '@/components/common'
 
 const appStore = useAppStore()
 const chatStore = useChatStore()
-
+const router = useRouter()
 const { isMobile } = useBasicLayout()
-const show = ref(false)
 
 const collapsed = computed(() => appStore.siderCollapsed)
 
@@ -24,6 +25,12 @@ function handleAdd() {
 
 function handleUpdateCollapsed() {
   appStore.setSiderCollapsed(!collapsed.value)
+}
+
+function goToPage(path: string) {
+  // 清除list中chatItem的活跃态
+  chatStore.setActive(0)
+  router.push({ path })
 }
 
 const getMobileClass = computed<CSSProperties>(() => {
@@ -79,9 +86,14 @@ watch(
         <div class="flex-1 min-h-0 pb-4 overflow-hidden">
           <List />
         </div>
+        <div class="px-4">
+          <NButton block @click="goToPage('/shortcutSetting')">
+            {{ $t('store.shortcutSettingButton') }}
+          </NButton>
+        </div>
         <div class="p-4">
-          <NButton block @click="show = true">
-            {{ $t('store.siderButton') }}
+          <NButton block @click="goToPage('/promptStore')">
+            {{ $t('store.promptStoreButton') }}
           </NButton>
         </div>
       </main>
@@ -91,5 +103,4 @@ watch(
   <template v-if="isMobile">
     <div v-show="!collapsed" class="fixed inset-0 z-40 bg-black/40" @click="handleUpdateCollapsed" />
   </template>
-  <PromptStore v-model:visible="show" />
 </template>

@@ -71,7 +71,8 @@ export default {
     balance: 'API Balance',
   },
   store: {
-    siderButton: 'Prompt Store',
+    promptStoreButton: 'Prompt Store',
+    shortcutSettingButton: 'Shortcut Setting',
     local: 'Local',
     online: 'Online',
     title: 'Title',

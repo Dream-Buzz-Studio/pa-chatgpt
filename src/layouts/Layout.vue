@@ -2,8 +2,9 @@
 import { computed } from 'vue'
 import { NLayout, NLayoutContent } from 'naive-ui'
 import { useRouter } from 'vue-router'
-import Sider from './sider/index.vue'
 import Permission from './Permission.vue'
+import MobileHeader from './MobileHeader.vue'
+import Sider from './sider/index.vue'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { useAppStore, useAuthStore, useChatStore } from '@/store'
 
@@ -41,6 +42,8 @@ const getContainerClass = computed(() => {
         <Sider />
         <NLayoutContent class="h-full">
           <RouterView v-slot="{ Component, route }">
+            <!-- Chat页单独维护Header -->
+            <MobileHeader v-if="isMobile && route.name !== 'Chat'" />
             <component :is="Component" :key="route.fullPath" />
           </RouterView>
         </NLayoutContent>

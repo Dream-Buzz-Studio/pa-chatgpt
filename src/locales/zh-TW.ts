@@ -71,7 +71,8 @@ export default {
     balance: 'API余額',
   },
   store: {
-    siderButton: '提示詞商店',
+    promptStoreButton: '提示詞商店',
+    shortcutSettingButton: '快捷鍵設定',
     local: '本機',
     online: '線上',
     title: '標題',

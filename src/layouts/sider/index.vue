@@ -2,7 +2,6 @@
 import type { CSSProperties } from 'vue'
 import { computed, watch } from 'vue'
 import { NButton, NLayoutSider } from 'naive-ui'
-import { useRouter } from 'vue-router'
 
 import List from './List.vue'
 import Footer from './Footer.vue'
@@ -12,7 +11,6 @@ import { useBasicLayout } from '@/hooks/useBasicLayout'
 
 const appStore = useAppStore()
 const chatStore = useChatStore()
-const router = useRouter()
 const { isMobile } = useBasicLayout()
 
 const collapsed = computed(() => appStore.siderCollapsed)
@@ -25,12 +23,6 @@ function handleAdd() {
 
 function handleUpdateCollapsed() {
   appStore.setSiderCollapsed(!collapsed.value)
-}
-
-function goToPage(path: string) {
-  // 清除list中chatItem的活跃态
-  chatStore.setActive(0)
-  router.push({ path })
 }
 
 const getMobileClass = computed<CSSProperties>(() => {
@@ -87,12 +79,12 @@ watch(
           <List />
         </div>
         <div class="px-4">
-          <NButton block @click="goToPage('/shortcutSetting')">
+          <NButton block @click="$router.replace({ path: '/shortcutSetting' })">
             {{ $t('store.shortcutSettingButton') }}
           </NButton>
         </div>
         <div class="p-4">
-          <NButton block @click="goToPage('/promptStore')">
+          <NButton block @click="$router.replace({ path: '/promptStore' })">
             {{ $t('store.promptStoreButton') }}
           </NButton>
         </div>

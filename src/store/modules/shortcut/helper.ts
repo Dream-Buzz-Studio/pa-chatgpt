@@ -1,18 +1,18 @@
 import { ss } from '@/utils/storage'
 
-const LOCAL_NAME = 'ShortcutStore'
+const LOCAL_NAME = 'shortcutStore'
 
 export type ShortcutList = []
 
 export interface ShortcutStore {
-  ShortcutList: ShortcutList
+  shortcutList: ShortcutList
 }
 
 export function getLocalShortcutList(): ShortcutStore {
-  const ShortcutStore: ShortcutStore | undefined = ss.get(LOCAL_NAME)
-  return ShortcutStore ?? { ShortcutList: [] }
+  const shortcutStore: ShortcutStore | undefined = ss.get(LOCAL_NAME)
+  return shortcutStore ?? { shortcutList: [] }
 }
 
-export function setLocalShortcutList(ShortcutStore: ShortcutStore): void {
-  ss.set(LOCAL_NAME, ShortcutStore)
+export function setLocalShortcutList(shortcutStore: ShortcutStore): void {
+  ss.set(LOCAL_NAME, shortcutStore)
 }

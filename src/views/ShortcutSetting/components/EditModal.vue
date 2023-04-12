@@ -1,5 +1,5 @@
 <script setup lang='ts'>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { FormRules } from 'naive-ui'
 import { NDynamicTags, NForm, NFormItem, NInput, NModal, useMessage } from 'naive-ui'
 import type { Shortcut } from '../index.vue'
@@ -7,19 +7,19 @@ import EditDiv from './EditDiv.vue'
 
 // TODO：
 // input的校验
-// 修改时回填（区分add模式跟modify模式）
 interface Props {
   visible: boolean
+  shortcut: Shortcut | undefined
 }
 interface Emit {
   (ev: 'update:visible', visible: boolean): void
-  (ev: 'add', shortcut: Shortcut): void
+  (ev: 'confirm', shortcut: Shortcut): void
 }
 const props = defineProps<Props>()
 const emit = defineEmits<Emit>()
 const message = useMessage()
 
-const shortcut = ref<Shortcut>({
+const shortcut = ref<Shortcut>(props.shortcut || {
   name: '',
   promptHtml: '请在这里输入prompt',
   params: [],
@@ -40,6 +40,30 @@ const rules: FormRules = {
   ],
 }
 
+watch(
+  () => props.shortcut,
+  () => {
+    if (!props.shortcut)
+      return
+    shortcut.value = { ...props.shortcut }
+  },
+)
+
+watch(
+  () => shortcut.value.promptHtml,
+  (val) => {
+    const paramsList: string[] = []
+    const regex = /<span[^>]*\sdata-name="([^"]*)"[^>]*>(.*?)<\/span>/g
+    const matches: RegExpMatchArray[] = [...val.matchAll(regex)]
+    matches.forEach((match: RegExpMatchArray) => {
+      // 包含span标签，则加入参数列表
+      paramsList.push(match[1])
+    })
+    shortcut.value.params = paramsList
+  },
+  { deep: true },
+)
+
 const show = computed({
   get() {
     return props.visible
@@ -48,16 +72,6 @@ const show = computed({
     emit('update:visible', visible)
   },
 })
-
-function addParamTag(name: string) {
-  const isHasName = shortcut.value.params.includes(name)
-  if (isHasName) {
-    message.error('重复添加参数！')
-    return false
-  }
-  shortcut.value.params.unshift(name)
-  return true
-}
 
 // 这一段powerd by gpt，让我们谢谢openai谢谢美好的新时代！！
 function updateParamsTag() {
@@ -71,6 +85,14 @@ function updateParamsTag() {
   })
   shortcut.value.promptHtml = newHtmlStr
 }
+
+function handleCancel() {
+
+}
+
+function handleConfirm() {
+  emit('confirm', shortcut.value)
+}
 </script>
 
 <template>
@@ -79,17 +101,21 @@ function updateParamsTag() {
     :show-icon="false"
     positive-text="确认"
     negative-text="取消"
-    @positive-click="$emit('add', shortcut)"
+    @positive-click="handleConfirm"
+    @negative-click="handleCancel"
   >
-    <NForm ref="formRef" :model="shortcut" :rules="rules">
-      <NFormItem path="name" label="指令名">
+    <NForm ref="formRef" :model="shortcut" :rules="rules" class="mt-8">
+      <NFormItem path="name" label="指令名" class="space-y-2">
         <NInput v-model:value="shortcut.name" @keydown.enter.prevent />
       </NFormItem>
-      <NFormItem path="promptHtml" label="指令详情">
-        <EditDiv v-model:promptHtml="shortcut.promptHtml" @add-param-tag="addParamTag" />
+      <NFormItem path="promptHtml" label="指令详情" class="space-y-2">
+        <EditDiv v-model:promptHtml="shortcut.promptHtml" />
       </NFormItem>
-      <NFormItem path="params" label="参数列表">
-        <NDynamicTags v-model:value="shortcut.params" @update:value="updateParamsTag" />
+      <NFormItem path="params" label="参数列表" class="space-y-2">
+        <NDynamicTags v-model:value="shortcut.params" @update:value="updateParamsTag">
+          <!-- 去掉添加按钮，传入空的slot -->
+          <template #trigger />
+        </NDynamicTags>
       </NFormItem>
     </NForm>
   </NModal>

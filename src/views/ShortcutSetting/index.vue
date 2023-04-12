@@ -1,8 +1,8 @@
 <script setup lang='ts'>
-import { ref, watch } from 'vue'
+import { h, ref, watch } from 'vue'
 import type { DataTableColumns } from 'naive-ui'
 import { NButton, NDataTable, useMessage } from 'naive-ui'
-import AddModal from './components/AddModal.vue'
+import EditModal from './components/EditModal.vue'
 import { useShortcutStore } from '@/store/modules/shortcut'
 import { t } from '@/locales'
 
@@ -14,11 +14,15 @@ export interface Shortcut {
   promptHtml: string
   params: string[]
 }
-
+export type EditModalMode = 'add' | 'modify'
 const message = useMessage()
 const shortcutStore = useShortcutStore()
 const shortcutList = ref<any>(shortcutStore.shortcutList)
-const showAddModal = ref(false)
+const showEditModal = ref(false)
+// 当前选中的shortcut
+const currentShortcut = ref<Shortcut | undefined>(undefined)
+// 编辑弹窗的模式
+const editModalMode = ref<EditModalMode>()
 
 watch(
   () => shortcutList,
@@ -34,28 +38,81 @@ const createColumns = (): DataTableColumns<Shortcut> => {
     {
       title: '指令名',
       key: 'name',
+      width: 100,
     },
     {
       title: '指令详情',
       key: 'promptHtml',
+      width: 500,
     },
     {
       title: '指令参数',
       key: 'params',
+      width: 100,
+    },
+    {
+      title: t('common.action'),
+      key: 'actions',
+      width: 100,
+      align: 'center',
+      render(row) {
+        return h('div', { class: 'flex items-center flex-col gap-2' }, {
+          default: () => [h(
+            NButton,
+            {
+              tertiary: true,
+              size: 'small',
+              type: 'info',
+              onClick: () => handleShowEditModal('modify', row),
+            },
+            { default: () => t('common.edit') },
+          ),
+          h(
+            NButton,
+            {
+              tertiary: true,
+              size: 'small',
+              type: 'error',
+              onClick: () => deleteShortcut(row),
+            },
+            { default: () => t('common.delete') },
+          ),
+          ],
+        })
+      },
     },
   ]
 }
 const columns = createColumns()
 
-function addShortcut(shortcut: Shortcut) {
-  shortcutList.value.unshift(shortcut)
-  message.success(t('common.addSuccess'))
+function handleShowEditModal(mode: EditModalMode, shortcut?: Shortcut) {
+  editModalMode.value = mode
+  showEditModal.value = true
+  if (mode === 'modify' && shortcut)
+    currentShortcut.value = shortcut
+}
+
+function deleteShortcut(shortcut: Shortcut) {
+  const index = shortcutList.value.indexOf(shortcut)
+  shortcutList.value.splice(index, 1)
+}
+
+function editShortcut(shortcut: Shortcut) {
+  if (editModalMode.value === 'add') {
+    shortcutList.value.unshift(shortcut)
+    message.success(t('common.addSuccess'))
+  }
+  if (editModalMode.value === 'modify') {
+    const index = shortcutList.value.indexOf(shortcut)
+    shortcutList.value.splice(index, 1, shortcut)
+  }
+  currentShortcut.value = undefined
 }
 </script>
 
 <template>
   <div class="space-y-4 w-full h-full p-4">
-    <NButton @click="showAddModal = true">
+    <NButton @click="handleShowEditModal('add')">
       添加shortcut
     </NButton>
     <NDataTable
@@ -64,5 +121,5 @@ function addShortcut(shortcut: Shortcut) {
       :bordered="false"
     />
   </div>
-  <AddModal v-model:visible="showAddModal" @add="addShortcut" />
+  <EditModal v-model:visible="showEditModal" :shortcut="currentShortcut" @confirm="editShortcut" />
 </template>

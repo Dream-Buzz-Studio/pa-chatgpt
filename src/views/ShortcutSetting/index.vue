@@ -1,7 +1,7 @@
 <script setup lang='ts'>
 import { h, ref, watch } from 'vue'
 import type { DataTableColumns } from 'naive-ui'
-import { NButton, NDataTable, useMessage } from 'naive-ui'
+import { NButton, NDataTable, NTag, useMessage } from 'naive-ui'
 import EditModal from './components/EditModal.vue'
 import { useShortcutStore } from '@/store/modules/shortcut'
 import { t } from '@/locales'
@@ -44,11 +44,28 @@ const createColumns = (): DataTableColumns<Shortcut> => {
       title: '指令详情',
       key: 'promptHtml',
       width: 500,
+      render(row) {
+        return h('div', { innerHTML: row.promptHtml })
+      },
     },
     {
       title: '指令参数',
       key: 'params',
       width: 100,
+      render(row) {
+        return h('div', { class: 'flex flex-row flex-wrap items-center gap-2' }, {
+          default: () => row.params.map(item =>
+            h(
+              NTag,
+              {
+                size: 'small',
+                bordered: false,
+              },
+              { default: () => item },
+            ),
+          ),
+        })
+      },
     },
     {
       title: t('common.action'),
@@ -56,13 +73,12 @@ const createColumns = (): DataTableColumns<Shortcut> => {
       width: 100,
       align: 'center',
       render(row) {
-        return h('div', { class: 'flex items-center flex-col gap-2' }, {
+        return h('div', { class: 'flex flex-row items-center justify-center gap-2' }, {
           default: () => [h(
             NButton,
             {
-              tertiary: true,
               size: 'small',
-              type: 'info',
+              type: 'primary',
               onClick: () => handleShowEditModal('modify', row),
             },
             { default: () => t('common.edit') },
@@ -70,7 +86,6 @@ const createColumns = (): DataTableColumns<Shortcut> => {
           h(
             NButton,
             {
-              tertiary: true,
               size: 'small',
               type: 'error',
               onClick: () => deleteShortcut(row),
@@ -88,6 +103,8 @@ const columns = createColumns()
 function handleShowEditModal(mode: EditModalMode, shortcut?: Shortcut) {
   editModalMode.value = mode
   showEditModal.value = true
+  if (mode === 'add')
+    currentShortcut.value = undefined
   if (mode === 'modify' && shortcut)
     currentShortcut.value = shortcut
 }
@@ -121,5 +138,5 @@ function editShortcut(shortcut: Shortcut) {
       :bordered="false"
     />
   </div>
-  <EditModal v-model:visible="showEditModal" :shortcut="currentShortcut" @confirm="editShortcut" />
+  <EditModal v-model:visible="showEditModal" :shortcut="currentShortcut" @edit-shortcut="editShortcut" />
 </template>

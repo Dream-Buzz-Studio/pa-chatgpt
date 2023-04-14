@@ -27,7 +27,7 @@ const innerHTML = computed({
   },
 })
 
-function onMouseUp() {
+function getSelection() {
   if (!window.getSelection())
     return
   //  获取html
@@ -69,12 +69,12 @@ function addParam() {
 <template>
   <div class="w-full relative">
     <NButton class="!absolute right-0 -top-10" :disabled="!selectedText" @click="showAddParamModal = true">
-      设置为占位符
+      设置为参数
     </NButton>
     <div
       class="w-full h-36 p-4 overflow-y-scroll whitespace-pre-wrap text-left border rounded border-gray-500"
       contenteditable="true"
-      @mouseup="onMouseUp"
+      @mouseup="getSelection"
       @focus="selectedText = ''"
       @blur="changeText($event)"
       v-html="innerHTML"

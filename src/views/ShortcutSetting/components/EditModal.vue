@@ -1,7 +1,7 @@
 <script setup lang='ts'>
 import { computed, ref, watch } from 'vue'
 import type { FormRules } from 'naive-ui'
-import { NDynamicTags, NForm, NFormItem, NInput, NModal, useMessage } from 'naive-ui'
+import { NDynamicTags, NEmpty, NForm, NFormItem, NInput, NModal, useMessage } from 'naive-ui'
 import type { Shortcut } from '../index.vue'
 import EditDiv from './EditDiv.vue'
 
@@ -13,7 +13,7 @@ interface Props {
 }
 interface Emit {
   (ev: 'update:visible', visible: boolean): void
-  (ev: 'confirm', shortcut: Shortcut): void
+  (ev: 'editShortcut', shortcut: Shortcut): void
 }
 const props = defineProps<Props>()
 const emit = defineEmits<Emit>()
@@ -44,9 +44,11 @@ watch(
   () => props.shortcut,
   () => {
     if (!props.shortcut)
-      return
-    shortcut.value = { ...props.shortcut }
+      resetShortcut()
+    else
+      shortcut.value = { ...props.shortcut }
   },
+  { immediate: true },
 )
 
 watch(
@@ -73,6 +75,14 @@ const show = computed({
   },
 })
 
+function resetShortcut() {
+  shortcut.value = {
+    name: '',
+    promptHtml: '请在这里输入prompt',
+    params: [],
+  }
+}
+
 // 这一段powerd by gpt，让我们谢谢openai谢谢美好的新时代！！
 function updateParamsTag() {
   const regex = /<span[^>]*data-name="(.*?)"[^>]*>(.*?)<\/span>/g
@@ -85,14 +95,6 @@ function updateParamsTag() {
   })
   shortcut.value.promptHtml = newHtmlStr
 }
-
-function handleCancel() {
-
-}
-
-function handleConfirm() {
-  emit('confirm', shortcut.value)
-}
 </script>
 
 <template>
@@ -101,8 +103,8 @@ function handleConfirm() {
     :show-icon="false"
     positive-text="确认"
     negative-text="取消"
-    @positive-click="handleConfirm"
-    @negative-click="handleCancel"
+    @positive-click="$emit('editShortcut', shortcut)"
+    @negative-click="resetShortcut"
   >
     <NForm ref="formRef" :model="shortcut" :rules="rules" class="mt-8">
       <NFormItem path="name" label="指令名" class="space-y-2">
@@ -112,10 +114,11 @@ function handleConfirm() {
         <EditDiv v-model:promptHtml="shortcut.promptHtml" />
       </NFormItem>
       <NFormItem path="params" label="参数列表" class="space-y-2">
-        <NDynamicTags v-model:value="shortcut.params" @update:value="updateParamsTag">
+        <NDynamicTags v-if="shortcut.params.length" v-model:value="shortcut.params" @update:value="updateParamsTag">
           <!-- 去掉添加按钮，传入空的slot -->
           <template #trigger />
         </NDynamicTags>
+        <NEmpty v-else description="暂无参数，请点击按钮添加" />
       </NFormItem>
     </NForm>
   </NModal>

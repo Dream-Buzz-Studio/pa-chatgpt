@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import type { FormRules } from 'naive-ui'
 import { NDynamicTags, NEmpty, NForm, NFormItem, NInput, NModal, useMessage } from 'naive-ui'
-import type { Shortcut } from '../index.vue'
+import type { Shortcut, ShortcutParams } from '../index.vue'
 import EditDiv from './EditDiv.vue'
 
 // TODO：
@@ -54,12 +54,15 @@ watch(
 watch(
   () => shortcut.value.promptHtml,
   (val) => {
-    const paramsList: string[] = []
+    const paramsList: ShortcutParams[] = []
     const regex = /<span[^>]*\sdata-name="([^"]*)"[^>]*>(.*?)<\/span>/g
     const matches: RegExpMatchArray[] = [...val.matchAll(regex)]
     matches.forEach((match: RegExpMatchArray) => {
       // 包含span标签，则加入参数列表
-      paramsList.push(match[1])
+      paramsList.push({
+        label: match[1],
+        value: '',
+      })
     })
     shortcut.value.params = paramsList
   },
@@ -87,13 +90,24 @@ function resetShortcut() {
 function updateParamsTag() {
   const regex = /<span[^>]*data-name="(.*?)"[^>]*>(.*?)<\/span>/g
   const newHtmlStr = shortcut.value.promptHtml.replace(regex, (match, p1, p2) => {
+    const param = {
+      label: p1,
+      value: '',
+    }
     // params不包括该参数，则将span替换为文本，取消高亮
-    if (!shortcut.value.params.includes(p1))
+    if (!shortcut.value.params.includes(param))
       return p2
     else
       return match
   })
   shortcut.value.promptHtml = newHtmlStr
+}
+
+function onParamCreate(label: string) {
+  return {
+    label,
+    value: '',
+  }
 }
 </script>
 
@@ -114,7 +128,7 @@ function updateParamsTag() {
         <EditDiv v-model:promptHtml="shortcut.promptHtml" />
       </NFormItem>
       <NFormItem path="params" label="参数列表" class="space-y-2">
-        <NDynamicTags v-if="shortcut.params.length" v-model:value="shortcut.params" @update:value="updateParamsTag">
+        <NDynamicTags v-if="shortcut.params.length" v-model:value="shortcut.params" @create="onParamCreate" @update:value="updateParamsTag">
           <!-- 去掉添加按钮，传入空的slot -->
           <template #trigger />
         </NDynamicTags>

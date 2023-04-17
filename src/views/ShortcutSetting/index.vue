@@ -2,17 +2,22 @@
 import { h, ref, watch } from 'vue'
 import type { DataTableColumns } from 'naive-ui'
 import { NButton, NDataTable, NTag, useMessage } from 'naive-ui'
-import EditModal from './components/EditModal.vue'
+import { EditModal } from './components'
 import { useShortcutStore } from '@/store/modules/shortcut'
 import { t } from '@/locales'
 
 // TODO
 // 表格样式优化，考虑增加【一键尝试】功能
 
+export interface ShortcutParams {
+  label: string
+  value: string
+}
+
 export interface Shortcut {
   name: string
   promptHtml: string
-  params: string[]
+  params: Array<ShortcutParams>
 }
 export type EditModalMode = 'add' | 'modify'
 const message = useMessage()
@@ -61,7 +66,7 @@ const createColumns = (): DataTableColumns<Shortcut> => {
                 size: 'small',
                 bordered: false,
               },
-              { default: () => item },
+              { default: () => item.label },
             ),
           ),
         })

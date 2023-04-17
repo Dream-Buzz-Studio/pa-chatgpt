@@ -6,15 +6,16 @@ import Draggable from 'vuedraggable'
 
 import { useScroll } from '../../hooks/useScroll'
 import { SvgIcon } from '@/components/common'
-import { usePromptStore } from '@/store'
+import { useShortcutStore } from '@/store'
+import type { Shortcut } from '@/views/ShortcutSetting/index.vue'
 
 interface Emit {
-  (ev: 'updateInput', prompt: string): void
+  (ev: 'handleShortcut', shortcut: Shortcut): void
 }
 const emit = defineEmits<Emit>()
 
-const promptStore = usePromptStore()
-const { promptList: promptTemplate } = storeToRefs<any>(promptStore)
+const shortcutListStore = useShortcutStore()
+const { shortcutList } = storeToRefs<any>(shortcutListStore)
 // 是否折叠所有指令
 const collapsed = ref(true)
 // 是否开始对指令排序
@@ -34,17 +35,14 @@ function handleUpdateCollapsed() {
   collapsed.value = true
   startSort.value = false
   // 关闭时进度条回顶
-  scrollRef.value = document.querySelector('#scrollPromptRef')
+  scrollRef.value = document.querySelector('#scrollshortcutRef')
   scrollToTop()
-}
-
-function handlePromptClick(prompt: any) {
-  emit('updateInput', prompt.key)
 }
 </script>
 
 <template>
   <NCard
+    v-if="shortcutList.length"
     :title="collapsed ? undefined : '快捷指令'"
     :closable="!collapsed"
     class="relative flex content-between mb-4"
@@ -55,7 +53,7 @@ function handlePromptClick(prompt: any) {
   >
     <SvgIcon
       v-if="collapsed"
-      class="absolute top-0 right-3 h-16 text-2xl"
+      class="absolute top-0 right-3 h-14 text-2xl"
       icon="ri:list-settings-line"
       @click="collapsed = false"
     />
@@ -65,9 +63,9 @@ function handlePromptClick(prompt: any) {
       </NButton>
     </template>
     <!-- 排序状态，没有hover和click事件 -->
-    <div v-if="startSort" id="scrollPromptRef" :class="cardContentClass">
+    <div v-if="startSort" id="scrollshortcutRef" :class="cardContentClass">
       <Draggable
-        v-model="promptTemplate"
+        v-model="shortcutList"
         :force-fallback="true"
         item-key="key"
         chosen-class="!border-green-500"
@@ -80,19 +78,19 @@ function handlePromptClick(prompt: any) {
       </Draggable>
     </div>
     <!-- 展示状态 -->
-    <div v-else id="scrollPromptRef" :class="cardContentClass">
+    <div v-else id="scrollshortcutRef" :class="cardContentClass">
       <NPopover
-        v-for="item in promptTemplate"
+        v-for="item in shortcutList"
         :key="item.key"
         class="max-w-3xl"
         trigger="hover"
       >
         <template #trigger>
-          <NTag :bordered="false" class="mr-3 my-2 hover:border hover:border-[#4b9e5f]" @click="handlePromptClick(item)">
-            {{ item.key }}
+          <NTag :bordered="false" class="gap-2 hover:border hover:border-[#4b9e5f]" @click="$emit('handleShortcut', item)">
+            {{ item.name }}
           </NTag>
         </template>
-        {{ item.value }}
+        <span v-html="item.promptHtml" />
       </NPopover>
     </div>
   </NCard>

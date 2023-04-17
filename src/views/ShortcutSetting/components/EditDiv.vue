@@ -64,6 +64,28 @@ function addParam() {
   selectedText.value = ''
   showAddParamModal.value = false
 }
+
+// 删除粘贴时的文字样式
+function removeFormattingFromPastedText(input: string): string {
+  const div = document.createElement('div')
+  div.innerHTML = input
+  const text = div.textContent || div.innerText || ''
+  return text.trim()
+}
+
+function paste(evt: ClipboardEvent) {
+  const pastedText = evt.clipboardData?.getData('text/plain')
+  if (pastedText) {
+    const plainText = removeFormattingFromPastedText(pastedText)
+    const selection = window.getSelection()
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0)
+      range.deleteContents()
+      range.insertNode(document.createTextNode(plainText))
+    }
+  }
+  evt.preventDefault()
+}
 </script>
 
 <template>
@@ -74,6 +96,7 @@ function addParam() {
     <div
       class="w-full h-36 p-4 overflow-y-scroll whitespace-pre-wrap text-left border rounded border-gray-500"
       contenteditable="true"
+      @paste="paste"
       @mouseup="getSelection"
       @focus="selectedText = ''"
       @blur="changeText($event)"

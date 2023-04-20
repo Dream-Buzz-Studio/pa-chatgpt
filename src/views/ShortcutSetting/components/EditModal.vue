@@ -58,10 +58,9 @@ watch(
     const regex = /<span[^>]*\sdata-name="([^"]*)"[^>]*>(.*?)<\/span>/g
     const matches: RegExpMatchArray[] = [...val.matchAll(regex)]
     matches.forEach((match: RegExpMatchArray) => {
-      // 包含span标签，则加入参数列表
       paramsList.push({
-        label: match[1],
-        value: '',
+        label: match[1], // 第三个匹配项为span标签的data-name属性，参数名
+        value: match[2], // 第三个匹配项为span标签的文本，参数默认值
       })
     })
     shortcut.value.params = paramsList
@@ -92,7 +91,7 @@ function updateParamsTag() {
   const newHtmlStr = shortcut.value.promptHtml.replace(regex, (match, p1, p2) => {
     const param = {
       label: p1,
-      value: '',
+      value: p2,
     }
     // params不包括该参数，则将span替换为文本，取消高亮
     if (!shortcut.value.params.includes(param))

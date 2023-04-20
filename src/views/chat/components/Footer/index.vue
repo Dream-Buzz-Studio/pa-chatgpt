@@ -2,7 +2,7 @@
 import { NButton, useDialog } from 'naive-ui'
 import { computed, ref } from 'vue'
 
-import { PromptInput, ShortcutPreviewList } from '../index'
+import { PromptInput, ShortcutParamsInput, ShortcutPreviewList } from '../index'
 
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { HoverButton, SvgIcon } from '@/components/common'
@@ -47,7 +47,7 @@ const prompt = computed({
   },
 })
 const buttonDisabled = computed(() => {
-  return loading.value || !prompt.value || prompt.value.trim() === ''
+  return loading.value || ((!prompt.value || prompt.value.trim() === '') && !shortcut.value)
 })
 const footerClass = computed(() => {
   let classes = ['p-4']
@@ -87,6 +87,19 @@ function handleEnter(event: KeyboardEvent) {
   }
 }
 
+function handleSubmit() {
+  if (shortcut.value) {
+    const regex = /<span[^>]*data-name="(.*?)"[^>]*>(.*?)<\/span>/g
+    const finalPrompt = shortcut.value.promptHtml.replace(regex, (match, label) => {
+      // params不包括该参数，则将span替换为文本，取消高亮
+      const param = shortcut.value?.params.find(param => param.label === label)
+      return param?.value
+    })
+    prompt.value = finalPrompt
+  }
+  emit('submit')
+}
+
 function handleShortCutInput(shortcutMsg: Shortcut) {
   shortcut.value = shortcutMsg
   const regex = /<span[^>]*data-name="(.*?)"[^>]*>(.*?)<\/span>/g
@@ -124,14 +137,12 @@ function handleShortCutInput(shortcutMsg: Shortcut) {
             <SvgIcon icon="ri:chat-history-line" />
           </span>
         </HoverButton>
-        <div v-if="shortcut">
-          <NInput v-for="item in shortcut.params" :key="item.label" v-model="item.value" />
-        </div>
+        <ShortcutParamsInput v-if="shortcut" v-model:params="shortcut.params" />
         <PromptInput v-else v-model:prompt="prompt" @enter="handleEnter" />
         <NButton
           type="primary"
           :disabled="buttonDisabled"
-          @click="$emit('submit')"
+          @click="handleSubmit"
         >
           <template #icon>
             <span class="dark:text-black">

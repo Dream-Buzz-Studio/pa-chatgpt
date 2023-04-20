@@ -9,15 +9,17 @@ import { t } from '@/locales'
 // TODO
 // 表格样式优化，考虑增加【一键尝试】功能
 
-export interface ShortcutParams {
+export interface ShortcutParam {
   label: string
   value: string
 }
 
+export type ShortcutParams = Array<ShortcutParam>
+
 export interface Shortcut {
   name: string
   promptHtml: string
-  params: Array<ShortcutParams>
+  params: ShortcutParams
 }
 export type EditModalMode = 'add' | 'modify'
 const message = useMessage()

@@ -1,20 +1,21 @@
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
-import { NButton, NCard, NPopover, NTag } from 'naive-ui'
+import { NButton, NCard, NPopover, NSpace, NTag } from 'naive-ui'
 import { computed, ref } from 'vue'
 import Draggable from 'vuedraggable'
 
 import { useScroll } from '../../hooks/useScroll'
 import { SvgIcon } from '@/components/common'
-import { usePromptStore } from '@/store'
+import { useShortcutStore } from '@/store'
+import type { Shortcut } from '@/views/ShortcutSetting/index.vue'
 
 interface Emit {
-  (ev: 'updateInput', prompt: string): void
+  (ev: 'handleShortcut', shortcut: Shortcut): void
 }
 const emit = defineEmits<Emit>()
 
-const promptStore = usePromptStore()
-const { promptList: promptTemplate } = storeToRefs<any>(promptStore)
+const shortcutListStore = useShortcutStore()
+const { shortcutList } = storeToRefs<any>(shortcutListStore)
 // 是否折叠所有指令
 const collapsed = ref(true)
 // 是否开始对指令排序
@@ -25,26 +26,23 @@ const cardContentClass = computed(() => {
   const classes = ['!transition-all', '!duration-300', '!ease-linear']
   // 平滑的折叠收缩效果
   if (collapsed.value)
-    return classes.concat(['overflow-hidden', 'max-h-10', 'pr-8'])
+    return ['overflow-hidden', 'max-h-10', 'pr-8']
   else
-    return classes.concat(['overflow-auto', 'max-h-96'])
+    return ['overflow-auto', 'max-h-96']
 })
 
 function handleUpdateCollapsed() {
   collapsed.value = true
   startSort.value = false
   // 关闭时进度条回顶
-  scrollRef.value = document.querySelector('#scrollPromptRef')
+  scrollRef.value = document.querySelector('#scrollRef')
   scrollToTop()
-}
-
-function handlePromptClick(prompt: any) {
-  emit('updateInput', prompt.key)
 }
 </script>
 
 <template>
   <NCard
+    v-if="shortcutList.length"
     :title="collapsed ? undefined : '快捷指令'"
     :closable="!collapsed"
     class="relative flex content-between mb-4"
@@ -55,45 +53,47 @@ function handlePromptClick(prompt: any) {
   >
     <SvgIcon
       v-if="collapsed"
-      class="absolute top-0 right-3 h-16 text-2xl"
+      class="absolute top-0 right-3 h-14 text-2xl"
       icon="ri:list-settings-line"
       @click="collapsed = false"
     />
+    <!-- 卡片头部 -->
     <template #header-extra>
       <NButton type="success" :dashed="startSort" class="!mr-4" size="small" @click="startSort = !startSort">
         {{ startSort ? ' 完成' : '编辑顺序' }}
       </NButton>
     </template>
-    <!-- 排序状态，没有hover和click事件 -->
-    <div v-if="startSort" id="scrollPromptRef" :class="cardContentClass">
+    <!-- 卡片内容区 -->
+    <NSpace id="scrollRef" class="!transition-all !duration-300 !ease-linear" :class="cardContentClass">
+      <!-- 排序状态 -->
       <Draggable
-        v-model="promptTemplate"
+        v-if="startSort"
+        v-model="shortcutList"
         :force-fallback="true"
         item-key="key"
         chosen-class="!border-green-500"
       >
         <template #item="{ element }">
-          <NTag :bordered="false" class="mr-3 my-2 hover:border hover:border-[#4b9e5f]">
-            {{ element.key }}
+          <NTag :bordered="false" class="hover:border hover:border-[#4b9e5f]">
+            {{ element.name }}
           </NTag>
         </template>
       </Draggable>
-    </div>
-    <!-- 展示状态 -->
-    <div v-else id="scrollPromptRef" :class="cardContentClass">
+      <!-- 展示状态 -->
       <NPopover
-        v-for="item in promptTemplate"
-        :key="item.key"
+        v-for="item in shortcutList"
+        v-else
+        :key="item.name"
         class="max-w-3xl"
         trigger="hover"
       >
         <template #trigger>
-          <NTag :bordered="false" class="mr-3 my-2 hover:border hover:border-[#4b9e5f]" @click="handlePromptClick(item)">
-            {{ item.key }}
+          <NTag :bordered="false" class="hover:border hover:border-[#4b9e5f]" @click="$emit('handleShortcut', item)">
+            {{ item.name }}
           </NTag>
         </template>
-        {{ item.value }}
+        <span v-html="item.promptHtml" />
       </NPopover>
-    </div>
+    </NSpace>
   </NCard>
 </template>

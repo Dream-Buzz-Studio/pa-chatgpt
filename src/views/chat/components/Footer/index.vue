@@ -1,13 +1,14 @@
 <script lang="ts" setup>
 import { NButton, useDialog } from 'naive-ui'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
-import { FastPromptList, PromptInput } from '../index'
+import { PromptInput, ShortcutParamsInput, ShortcutPreviewList } from '../index'
 
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { HoverButton, SvgIcon } from '@/components/common'
 import { useChatStore } from '@/store'
 import { t } from '@/locales'
+import type { Shortcut } from '@/views/ShortcutSetting/index.vue'
 
 interface Props {
   usingContext: boolean
@@ -28,6 +29,7 @@ const emit = defineEmits<Emit>()
 const dialog = useDialog()
 const chatStore = useChatStore()
 const { isMobile } = useBasicLayout()
+const shortcut = ref<Shortcut | undefined>(undefined)
 const loading = computed({
   get() {
     return props.loading
@@ -45,7 +47,7 @@ const prompt = computed({
   },
 })
 const buttonDisabled = computed(() => {
-  return loading.value || !prompt.value || prompt.value.trim() === ''
+  return loading.value || ((!prompt.value || prompt.value.trim() === '') && !shortcut.value)
 })
 const footerClass = computed(() => {
   let classes = ['p-4']
@@ -84,12 +86,35 @@ function handleEnter(event: KeyboardEvent) {
     }
   }
 }
+
+function handleSubmit() {
+  if (shortcut.value) {
+    const regex = /<span[^>]*data-name="(.*?)"[^>]*>(.*?)<\/span>/g
+    const finalPrompt = shortcut.value.promptHtml.replace(regex, (match, label) => {
+      // params不包括该参数，则将span替换为文本，取消高亮
+      const param = shortcut.value?.params.find(param => param.label === label)
+      return param?.value
+    })
+    prompt.value = finalPrompt
+  }
+  emit('submit')
+}
+
+function handleShortCutInput(shortcutMsg: Shortcut) {
+  shortcut.value = shortcutMsg
+  const regex = /<span[^>]*data-name="(.*?)"[^>]*>(.*?)<\/span>/g
+  const finalPrompt = shortcutMsg.promptHtml.replace(regex, (match, p1, p2) => {
+    // params不包括该参数，则将span替换为文本，取消高亮
+    return p2
+  })
+  prompt.value = finalPrompt
+}
 </script>
 
 <template>
   <footer :class="footerClass">
     <div class="w-full max-w-screen-xl m-auto">
-      <FastPromptList @update-input="prompt => $emit('update:prompt', prompt)" />
+      <ShortcutPreviewList @handle-shortcut="handleShortCutInput" />
       <div class="flex items-center justify-between space-x-2">
         <HoverButton @click="handleClear">
           <span class="text-xl text-[#4f555e] dark:text-white">
@@ -112,11 +137,12 @@ function handleEnter(event: KeyboardEvent) {
             <SvgIcon icon="ri:chat-history-line" />
           </span>
         </HoverButton>
-        <PromptInput v-model:prompt="prompt" @enter="handleEnter" />
+        <ShortcutParamsInput v-if="shortcut" v-model:params="shortcut.params" />
+        <PromptInput v-else v-model:prompt="prompt" @enter="handleEnter" />
         <NButton
           type="primary"
           :disabled="buttonDisabled"
-          @click="$emit('submit')"
+          @click="handleSubmit"
         >
           <template #icon>
             <span class="dark:text-black">

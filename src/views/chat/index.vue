@@ -6,7 +6,6 @@ import { NButton, useDialog, useMessage } from 'naive-ui'
 import html2canvas from 'html2canvas'
 // 业务组件
 import { useUsingContext } from './hooks/useUsingContext'
-import { useCopyCode } from './hooks/useCopyCode'
 import { useScroll } from './hooks/useScroll'
 import { useChat } from './hooks/useChat'
 import { FooterComponent, HeaderComponent, Message } from './components'
@@ -23,8 +22,6 @@ const route = useRoute()
 const dialog = useDialog()
 const ms = useMessage()
 const chatStore = useChatStore()
-
-useCopyCode()
 
 const { isMobile } = useBasicLayout()
 const { addChat, updateChat, updateChatSome, getChatByUuidAndIndex } = useChat()
@@ -393,7 +390,7 @@ onUnmounted(() => {
       v-if="isMobile"
       :using-context="usingContext"
       @export="handleExport"
-      @toggle-using-context="toggleUsingContext"
+      @handle-clear="handleClear"
     />
     <main class="flex-1 overflow-hidden">
       <div id="scrollRef" ref="scrollRef" class="h-full overflow-hidden overflow-y-auto">
@@ -426,7 +423,7 @@ onUnmounted(() => {
                   <template #icon>
                     <SvgIcon icon="ri:stop-circle-line" />
                   </template>
-                  Stop Responding
+                  {{ t('common.stopResponding') }}
                 </NButton>
               </div>
             </div>

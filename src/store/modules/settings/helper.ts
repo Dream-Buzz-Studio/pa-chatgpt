@@ -11,7 +11,7 @@ export interface SettingsState {
 export function defaultSetting(): SettingsState {
   const currentDate = new Date()
   return {
-    systemMessage: `You are ChatGPT, a large language model trained by OpenAI. Follow the user\'s instructions carefully. Respond using markdown. currentDate is ${currentDate}`,
+    systemMessage: 'You are ChatGPT, a large language model trained by OpenAI. Follow the user\'s instructions carefully. Respond using markdown.',
     temperature: 0.8,
     top_p: 1,
   }

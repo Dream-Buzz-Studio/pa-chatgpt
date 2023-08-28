@@ -1,13 +1,14 @@
 <script setup lang='ts'>
 import { computed } from 'vue'
 import { NInput, NPopconfirm, NScrollbar } from 'naive-ui'
+import { useRoute } from 'vue-router'
 import { SvgIcon } from '@/components/common'
 import { useAppStore, useChatStore } from '@/store'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { debounce } from '@/utils/functions/debounce'
 
 const { isMobile } = useBasicLayout()
-
+const route = useRoute()
 const appStore = useAppStore()
 const chatStore = useChatStore()
 
@@ -46,7 +47,7 @@ function handleEnter({ uuid }: Chat.History, isEdit: boolean, event: KeyboardEve
 }
 
 function isActive(uuid: number) {
-  return chatStore.active === uuid
+  return route.name === 'Chat' && chatStore.active === uuid
 }
 </script>
 
